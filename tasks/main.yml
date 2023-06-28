@@ -1,0 +1,33 @@
+- name: Check distribution
+  debug:
+    var: ansible_distribution
+  register: distribution_result
+
+- name: Update package cache
+  yum:
+    name: '*'
+    state: latest
+  become: true
+  when: distribution_result['ansible_distribution'] == "Amazon"
+
+- name: Check distribution
+  debug:
+    var: ansible_distribution
+  register: distribution_result
+
+- name: Install Nginx using amazon-linux-extras
+  command: amazon-linux-extras install nginx1 -y
+  when: distribution_result['ansible_distribution'] == "Amazon"
+
+- name: Start Nginx service
+  service:
+    name: nginx
+    state: started
+  when: distribution_result['ansible_distribution'] == "Amazon"
+
+- name: Update index.html
+  copy:
+    src: templates/index.html
+    dest: /usr/share/nginx/html
+  notify:
+    - Restart Nginx
